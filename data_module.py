@@ -132,35 +132,19 @@ class FSDataset(Dataset):
 @hydra.main(config_path='config', config_name='default', version_base=None)
 def main(cfg):
  
-    # 初始化DataModule
     data_module = DataModule(cfg)
 
-    # 获取训练数据加载器
+ 
     train_loader = data_module.val_dataloader()
 
-    # 用于保存无错误的音频路径
+ 
     valid_filelist = []
 
-    # 遍历数据集
+ 
     for batch_idx, batch in enumerate(tqdm(train_loader, desc="Processing batches", unit="batch")):
-        # try:
+ 
         wavs = batch['wav']
-            # paths = batch['paths']
-            # print(f"Loaded batch {batch_idx + 1} with shape: {wavs.shape}")
-            
-            # 将没有问题的路径保存到 valid_filelist
-        #     valid_filelist.extend(paths)
-        # except Exception as e:
-        #     # 如果遇到问题，打印错误信息和文件路径
-        #     print(f"Error in batch {batch_idx + 1}: {e}")
-        #     print(f"Paths in this batch: {batch['paths']}")
-
-    # 保存没有问题的音频文件列表到新的文件中
-    # with open('/aifs4su/data/zheny/data/data_8_21_2/mls_all_audio_path2.txt', 'w') as f:
-    #     for item in valid_filelist:
-    #         f.write(f"{item}\n")
-        c=1
-    print(f"Successfully saved valid filelist to 'valid_filelist.txt'")
+ 
 
 if __name__ == "__main__":
     main()
