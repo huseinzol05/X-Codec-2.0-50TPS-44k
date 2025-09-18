@@ -34,7 +34,9 @@ Or you can prepare yourself the data, example, [example.txt],
 wget https://huggingface.co/HKUSTAudio/xcodec2/resolve/main/ckpt/epoch%3D4-step%3D1400000.ckpt
 ```
 
-4. Run finetune,
+4. Interpolate to support 24k, [interpolate.ipynb](interpolate.ipynb).
+
+5. Run finetune,
 
 ```bash
 ./xcodec/bin/python3 train.py log_dir=24k \

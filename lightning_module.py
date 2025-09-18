@@ -14,8 +14,23 @@ from criterions import GANLoss, MultiResolutionMelSpectrogramLoss, MultiResoluti
 from common.schedulers import WarmupLR
 from transformers import AutoModel
 from modeling_xcodec2 import XCodec2Model
-import sys
+import omegaconf
+import typing
+import collections
+import time
 
+torch.serialization.add_safe_globals([
+    omegaconf.listconfig.ListConfig, 
+    omegaconf.base.ContainerMetadata,
+    typing.Any,
+    collections.defaultdict,
+    list,
+    dict,
+    int,
+    omegaconf.dictconfig.DictConfig,
+    omegaconf.nodes.AnyNode,
+    omegaconf.base.Metadata,
+])
 
 
 class CodecLightningModule(pl.LightningModule):
@@ -29,11 +44,26 @@ class CodecLightningModule(pl.LightningModule):
         self.automatic_optimization = False
 
     def construct_model(self):
-
-        self.model = XCodec2Model.from_pretrained("HKUSTAudio/xcodec2", ignore_mismatched_sizes=True).train()
+        
+        folder = os.path.dirname(os.path.realpath(__file__))
+        
+        self.model = XCodec2Model.from_pretrained(os.path.join(folder, 'interpolate'), ignore_mismatched_sizes=True).train()
         for name, p in self.model.named_parameters():
             if 'generator' not in name:
                 p.requires_grad = False
+        
+        print(self.model.generator.head.out.weight)
+        """
+        tensor([[ 0.0094,  0.0249,  0.0296,  ..., -0.0329,  0.0683, -0.0308],
+        [ 0.0191,  0.0315,  0.0257,  ...,  0.0276,  0.0226,  0.0008],
+        [ 0.0133,  0.0064,  0.0632,  ...,  0.0353, -0.0330,  0.0178],
+        ...,
+        [-0.0146,  0.0378,  0.0402,  ...,  0.0417, -0.0029, -0.0381],
+        [-0.0075,  0.0425, -0.0268,  ...,  0.0296,  0.0309, -0.0732],
+        [-0.1070,  0.0141, -0.0949,  ...,  0.1110,  0.1289, -0.1221]],
+       requires_grad=True)
+        """
+        time.sleep(5.0)
         
         # 初始化 MultiPeriod Discriminator
         mpdcfg = self.cfg.model.mpd
@@ -56,6 +86,23 @@ class CodecLightningModule(pl.LightningModule):
             downsample_scales=mstftcfg.downsample_scales,
             use_weight_norm=mstftcfg.use_weight_norm,
         )
+        try:
+            ckpt = torch.load(os.path.join(folder, 'epoch=4-step=1400000.ckpt'), map_location='cpu')
+            state_dict = ckpt['state_dict']
+            disc_state = {k.replace("discriminator.", ""): v 
+              for k, v in state_dict.items() if k.startswith("discriminator.")}
+
+            spec_disc_state = {k.replace("spec_discriminator.", ""): v 
+                            for k, v in state_dict.items() if k.startswith("spec_discriminator.")}
+
+            self.discriminator.load_state_dict(disc_state)
+            self.spec_discriminator.load_state_dict(spec_disc_state)
+            print('loaded discriminator checkpoint')
+
+        except Exception as e:
+            print(e)
+
+        time.sleep(5.0)
 
     def construct_criteria(self):
         cfg = self.cfg.train
