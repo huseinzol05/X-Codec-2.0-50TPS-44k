@@ -17,9 +17,6 @@ from transformers import AutoModel
 from vq.module import SemanticDecoder,SemanticEncoder
 from transformers import AutoFeatureExtractor, Wav2Vec2BertModel
 import sys
-sys.path.append('./eval_tools/tools/speaker_verification')    # We use wavlm_large_finetune as a vadidation metric during training, https://github.com/microsoft/UniSpeech/tree/main/downstreams/speaker_verification
-from  verification import init_model
-model_spk = init_model('wavlm_large','/aifs4su/data/zheny/models_fd_ckpt/wavlm_large_finetune.pth')
 
 
 
@@ -58,7 +55,7 @@ class CodecLightningModule(pl.LightningModule):
             depth=deccfg.depth,
             heads=deccfg.heads,
             pos_meb_dim=deccfg.pos_meb_dim,
-            hop_length=320,
+            hop_length=480,
             vq_num_quantizers=deccfg.vq_num_quantizers,  # VQ 量化器数量
             vq_dim=deccfg.vq_dim,                   # VQ 维度
             vq_commit_weight=deccfg.vq_commit_weight,    # VQ 提交权重
@@ -99,8 +96,6 @@ class CodecLightningModule(pl.LightningModule):
         # self.CodecEnc = torch.compile(self.CodecEnc)
         # self.generator.backbone = torch.compile(self.generator )
         # self.mel_conv = torch.compile(self.mel_conv)
- 
-        self.model_spk = model_spk .eval()
 
         # self.semantic_model = AutoModel.from_pretrained("microsoft/wavlm-large")
         # self.semantic_model.eval()
@@ -145,6 +140,7 @@ class CodecLightningModule(pl.LightningModule):
 
     def forward(self, batch):
         wav = batch['wav']
+        wav_24k = batch['wav_24k']
         feats= batch['feats']
         
         vq_emb = self.CodecEnc(wav.unsqueeze(1))
@@ -171,7 +167,7 @@ class CodecLightningModule(pl.LightningModule):
             self.fc_post_a(vq_post_emb.transpose(1, 2)) ,
             vq=False
         )
-        y = wav.unsqueeze(1)
+        y = wav_24k.unsqueeze(1)
 
         # gt_perceptual = self.perception_model(wav.squeeze(1), output_hidden_states=True) .hidden_states
         # gen_perceptual = self.perception_model(y_.squeeze(1), output_hidden_states=True) .hidden_states
@@ -357,24 +353,7 @@ class CodecLightningModule(pl.LightningModule):
         )
 
     def validation_step(self, batch, batch_idx):
-        # 您可以在此处实现验证逻辑
-        output = self(batch)
-        y = output['gt_wav']       # 真实音频
-        y_ = output['gen_wav']  
-           # 生成的重建音频
-        embeddings1 = self.model_spk( y.squeeze(1))
-        
-        # 处理目标文件
-        embeddings2 = self.model_spk(y_.squeeze(1))
-        
-        # 计算余弦相似度
-        
-        sim = F.cosine_similarity(embeddings1, embeddings2)
-        sim = sim.mean()
-        
-        self.log('val/sim', sim, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-
-        return {'sim': sim}
+        pass
 
  
 

@@ -90,11 +90,11 @@ class FSDataset(Dataset):
         # wav = self.load_wav(wavpath)
         # wav = torch.from_numpy(wav)
  
-        wav,sr=torchaudio.load(wavpath_full) 
- 
-                 
+        original_wav,sr=torchaudio.load(wavpath_full) 
+        min_audio_length_24k = int(self.min_audio_length / 16000 * 24000)
+
         if sr != 16000:
-            wav = Resample(sr, 16000)(wav)
+            wav = Resample(sr, 16000)(original_wav)
         wav = wav[0,:]
         length = wav.shape[0]
         # length = wav.shape[1]
@@ -103,14 +103,23 @@ class FSDataset(Dataset):
             length = wav.shape[0]
         i = random.randint(0, length-self.min_audio_length)
         wav = wav[i:i+self.min_audio_length]
-
         wav_pad = F.pad(wav, (160, 160))
         feat = self.feature_extractor(wav_pad, sampling_rate=16000, return_tensors="pt") .data['input_features']
+
+        if sr != 24000:
+            wav_24k = Resample(sr, 24000)(original_wav)
+        wav_24k = wav_24k[0,:]
+        length = wav_24k.shape[0]
+        if length < min_audio_length_24k:
+            wav_24k = F.pad(wav_24k, (0, min_audio_length_24k - length))
+            length = wav_24k.shape[0]
+        i = random.randint(0, length-min_audio_length_24k)
+        wav_24k = wav_24k[i:i+min_audio_length_24k]
+
         out = {
- 
             'wav': wav,
             'feat': feat,
-            # 'paths': wavpath_full
+            'wav_24k': wav_24k,
         }
         
         return out
@@ -119,11 +128,14 @@ class FSDataset(Dataset):
  
         wavs = [b['wav'] for b in bs]
         wavs = torch.stack(wavs)
+        wav2_24k = [b['wav_24k'] for b in bs]
+        wav2_24k = torch.stack(wav2_24k)
         feats = [b['feat'] for b in bs]
         feats = torch.stack(feats)
         out = {
  
-            'wav': wavs,  
+            'wav': wavs,
+            'wav_24k': wavs_24k,  
             'feats': feats,
             # 'paths': [b['paths'] for b in bs]
         }

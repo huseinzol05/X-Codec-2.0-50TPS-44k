@@ -3,13 +3,13 @@ import sys
 import numpy as np
 import torch
 import torch.nn as nn
-from vq.residual_vq import ResidualVQ
-from vq.module import WNConv1d, DecoderBlock, ResLSTM
-from vq.alias_free_torch import *
-from vq  import activations
+from .residual_vq import ResidualVQ
+from .module import WNConv1d, DecoderBlock, ResLSTM
+from .alias_free_torch import *
+from .  import activations
 from typing import Optional
-from vq.module   import ConvNeXtBlock,   AdaLayerNorm
-from vq.bs_roformer5 import TransformerBlock
+from .module   import ConvNeXtBlock,   AdaLayerNorm
+from .bs_roformer5 import TransformerBlock
 # from rotary_embedding_torch import RotaryEmbedding
 from torchtune.modules import RotaryPositionalEmbeddings
 from vector_quantize_pytorch import ResidualFSQ
