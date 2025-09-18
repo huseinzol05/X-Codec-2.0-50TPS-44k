@@ -92,6 +92,9 @@ class FSDataset(Dataset):
 
         if sr != 16000:
             wav = Resample(sr, 16000)(original_wav)
+        else:
+            wav = original_wav
+
         wav = wav[0,:]
         length = wav.shape[0]
         # length = wav.shape[1]

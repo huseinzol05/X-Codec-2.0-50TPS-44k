@@ -39,9 +39,10 @@ wget https://huggingface.co/HKUSTAudio/xcodec2/resolve/main/ckpt/epoch%3D4-step%
 5. Run finetune,
 
 ```bash
-./xcodec/bin/python3 train.py log_dir=24k \
-train.trainer.devices=1 \
+CUDA_VISIBLE_DEVICES="0,1" \
+python3 train.py log_dir=24k \
+train.trainer.devices=2 \
 dataset.train.filelist="/home/husein/ssd3/gemma3/audio-files.txt" \
-dataset.train.batch_size= \
-dataset.val.filelist="/home/husein/ssd3/gemma3/audio-files-test.txt" \
+dataset.train.batch_size=16 \
+dataset.val.filelist="/home/husein/ssd3/gemma3/audio-files-test.txt"
 ```
