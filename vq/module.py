@@ -2,19 +2,33 @@ import torch.nn as nn
 from einops import rearrange
 from . import activations
 from .alias_free_torch import *
-from torch.nn.utils import weight_norm
+# from torch.nn.utils import weight_norm
 
 from typing import Optional, Tuple
  
-from torch.nn.utils import weight_norm, remove_weight_norm
+# from torch.nn.utils import   remove_weight_norm
 
+from torch.nn.utils import parametrizations
+
+
+# def WNConv1d(*args, **kwargs):
+#     return weight_norm(nn.Conv1d(*args, **kwargs))
+
+
+# def WNConvTranspose1d(*args, **kwargs):
+#     return weight_norm(nn.ConvTranspose1d(*args, **kwargs))
 
 def WNConv1d(*args, **kwargs):
-    return weight_norm(nn.Conv1d(*args, **kwargs))
+    conv = nn.Conv1d(*args, **kwargs)
+    parametrizations.weight_norm(conv, name='weight', dim=0)
+    return conv
 
 
 def WNConvTranspose1d(*args, **kwargs):
-    return weight_norm(nn.ConvTranspose1d(*args, **kwargs))
+    convt = nn.ConvTranspose1d(*args, **kwargs)
+    parametrizations.weight_norm(convt, name='weight', dim=0)
+    return convt
+
 
 class ResidualUnit(nn.Module):
     def __init__(self, dim: int = 16, dilation: int = 1):
@@ -273,9 +287,9 @@ class ResBlock1(nn.Module):
 
     def remove_weight_norm(self):
         for l in self.convs1:
-            remove_weight_norm(l)
+            parametrizations.remove_parametrizations(l, 'weight')
         for l in self.convs2:
-            remove_weight_norm(l)
+            parametrizations.remove_parametrizations(l, 'weight')
 
     @staticmethod
     def get_padding(kernel_size: int, dilation: int = 1) -> int:

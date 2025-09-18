@@ -40,7 +40,7 @@ class XCodec2Model(PreTrainedModel):
         feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/w2v-bert-2.0")
         self.feature_extractor = feature_extractor
 
-    def forward(self, input_waveform, sample_rate=16000):
+    def forward(self, input_waveform, sample_rate=16000, pad=True):
         """
         这里的 forward 不一定要叫 forward，也可以拆成别的方法；
         但是如果想兼容 pipeline，需要在 forward 里给出核心逻辑。
@@ -53,16 +53,23 @@ class XCodec2Model(PreTrainedModel):
         """
         # 1) 特征提取
         # 如果需要 padding，可以在这里做
-        wav = input_waveform 
-        pad_for_wav = (320 - (wav.shape[1] % 320))
- 
-        wav = torch.nn.functional.pad(wav, (0, pad_for_wav))
+        with torch.no_grad():
+            wav = input_waveform 
+            pad_for_wav = (320 - (wav.shape[1] % 320))
+    
+            wav = torch.nn.functional.pad(wav, (0, pad_for_wav))
+            if pad:
+                padded = F.pad(wav, (160, 160, 0, 0))
+            else:
+                padded = wav
 
-        input_features = self.feature_extractor(
-            F.pad(wav[0,:].cpu(), (160, 160)), 
-            sampling_rate=sample_rate, 
-            return_tensors="pt"
-        ).input_features.to(self.device)  # [batch, frames, feat_dim]
+            input_features = self.feature_extractor(
+                padded.cpu().numpy(),
+                sampling_rate=sample_rate, 
+                return_tensors="pt"
+            ).input_features.to(self.device)  # [batch, frames, feat_dim]
+
+        print(input_features.shape)
 
         # 2) 语义层
         semantic_output = self.semantic_model(input_features)

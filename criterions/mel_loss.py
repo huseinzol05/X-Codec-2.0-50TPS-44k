@@ -9,7 +9,7 @@ from einops import rearrange
 class MultiResolutionMelSpectrogramLoss(nn.Module):
     def __init__(
         self,
-        sample_rate=16000,
+        sample_rate=24000,
         n_mels: List[int] = [5, 10, 20, 40, 80, 160, 320],
         window_lengths: List[int] = [32, 64, 128, 256, 512, 1024, 2048],
         clamp_eps: float = 1e-5,
