@@ -9,13 +9,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import pytorch_lightning as pl
-from vq import CodecEncoder,  CodecDecoderVocos 
 from module import HiFiGANMultiPeriodDiscriminator, SpecDiscriminator
 from criterions import GANLoss, MultiResolutionMelSpectrogramLoss, MultiResolutionSTFTLoss
 from common.schedulers import WarmupLR
 from transformers import AutoModel
-from vq.module import SemanticDecoder,SemanticEncoder
-from transformers import AutoFeatureExtractor, Wav2Vec2BertModel
 from modeling_xcodec2 import XCodec2Model
 import sys
 
@@ -33,7 +30,7 @@ class CodecLightningModule(pl.LightningModule):
 
     def construct_model(self):
 
-        self.model = XCodec2Model.from_pretrained("HKUSTAudio/xcodec2", ignore_mismatched_sizes=True)
+        self.model = XCodec2Model.from_pretrained("HKUSTAudio/xcodec2", ignore_mismatched_sizes=True).train()
         for name, p in self.model.named_parameters():
             if 'generator' not in name:
                 p.requires_grad = False
@@ -60,10 +57,6 @@ class CodecLightningModule(pl.LightningModule):
             use_weight_norm=mstftcfg.use_weight_norm,
         )
 
-        self.semantic_model = Wav2Vec2BertModel.from_pretrained("facebook/w2v-bert-2.0", output_hidden_states=True)
-        self.semantic_model.eval()
-        self.semantic_model.requires_grad_(False)
-
     def construct_criteria(self):
         cfg = self.cfg.train
         self.criteria = nn.ModuleDict()
@@ -87,8 +80,12 @@ class CodecLightningModule(pl.LightningModule):
         wav_24k = batch['wav_24k']
         feats = batch['feats']
 
-        y_ = model(wav_24k)
+        y_ = self.model(input_waveform=wav, input_features=feats[:,0])
         y = wav_24k.unsqueeze(1)
+
+        print('y', y_.shape, y.shape)
+
+        y_ = y_[:,:,:y.shape[2]]
 
         output = {
             'gt_wav': y,
@@ -99,7 +96,7 @@ class CodecLightningModule(pl.LightningModule):
 
     @torch.inference_mode()
     def inference(self, wav):
-        y_ = y_ = model(wav)
+        y_ = self.model(wav)
         return y_
 
     def compute_disc_loss(self, batch, output):
@@ -261,17 +258,7 @@ class CodecLightningModule(pl.LightningModule):
         # if hasattr(self, 'spec_discriminator'):
         disc_params = chain(disc_params, self.spec_discriminator.parameters())
 
-        # 生成器参数
-        gen_params = chain(
-            self.CodecEnc.parameters(),
-            self.generator.parameters(),
-            # self.mel_conv.parameters(),
-            self.fc_prior.parameters(),
-            self.fc_post_a.parameters(),
-            self.fc_post_s.parameters(),
-            self.SemanticDecoder_module.parameters(),
-            self.SemanticEncoder_module.parameters()
-        )
+        gen_params = (p for p in self.model.parameters() if p.requires_grad)
 
         # 优化器
         gen_opt = optim.AdamW(gen_params, **self.cfg.train.gen_optim_params)

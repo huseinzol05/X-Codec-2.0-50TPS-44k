@@ -3,7 +3,7 @@ dataset:
 
 train:
   filelist: /aifs4su/data/zheny/data/data_8_21_2/mls_all_audio_path_higher_quality.txt
-  batch_size: 8
+  batch_size: 12
   shuffle: true
 
 val:

@@ -374,7 +374,7 @@ class CodecDecoderVocos(nn.Module):
                  depth=12,
                  heads=16,
                  pos_meb_dim=64,
-                 hop_length=320,
+                 hop_length=480,
                  vq_num_quantizers=1,
                  vq_dim=2048, #1024 2048
                  vq_commit_weight=0.25,
@@ -479,7 +479,7 @@ class CodecDecoderVocos_transpose(nn.Module):
                  depth=12,
                  heads=16,
                  pos_meb_dim=64,
-                 hop_length=320,
+                 hop_length=480,
                  vq_num_quantizers=1,
                  vq_dim=1024, #1024 2048
                  vq_commit_weight=0.25,

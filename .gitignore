@@ -1,3 +1,6 @@
 *.ipynb_checkpoints
 *.ipynb
 __pycache__
+xcodec
+epoch=4-step=1400000.ckpt
+outputs

@@ -34,7 +34,7 @@ class DataModule(pl.LightningDataModule):
         dl = DataLoader(ds, 
                         batch_size=batch_size,
                         shuffle=phase_cfg.shuffle,
-                        num_workers=28,
+                        num_workers=10,
                         collate_fn=ds.collate_fn,
                         pin_memory=True,
                         persistent_workers=True)
@@ -85,12 +85,9 @@ class FSDataset(Dataset):
 
     def __getitem__(self, idx):
         # (  wavpath,fid) = self.filelist[idx]
-        wavpath  = self.filelist[idx]
-        wavpath_full = join(self.cfg.preprocess.datasets.LibriSpeech.root, wavpath)
-        # wav = self.load_wav(wavpath)
-        # wav = torch.from_numpy(wav)
+        wavpath_full  = self.filelist[idx]
  
-        original_wav,sr=torchaudio.load(wavpath_full) 
+        original_wav,sr = torchaudio.load(wavpath_full) 
         min_audio_length_24k = int(self.min_audio_length / 16000 * 24000)
 
         if sr != 16000:
@@ -108,6 +105,8 @@ class FSDataset(Dataset):
 
         if sr != 24000:
             wav_24k = Resample(sr, 24000)(original_wav)
+        else:
+            wav_24k = original_wav
         wav_24k = wav_24k[0,:]
         length = wav_24k.shape[0]
         if length < min_audio_length_24k:
@@ -128,8 +127,8 @@ class FSDataset(Dataset):
  
         wavs = [b['wav'] for b in bs]
         wavs = torch.stack(wavs)
-        wav2_24k = [b['wav_24k'] for b in bs]
-        wav2_24k = torch.stack(wav2_24k)
+        wavs_24k = [b['wav_24k'] for b in bs]
+        wavs_24k = torch.stack(wavs_24k)
         feats = [b['feat'] for b in bs]
         feats = torch.stack(feats)
         out = {
@@ -147,7 +146,7 @@ def main(cfg):
     data_module = DataModule(cfg)
 
  
-    train_loader = data_module.val_dataloader()
+    train_loader = data_module.train_dataloader()
 
  
     valid_filelist = []
