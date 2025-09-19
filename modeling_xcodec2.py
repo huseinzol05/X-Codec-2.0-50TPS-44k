@@ -39,6 +39,7 @@ class XCodec2Model(PreTrainedModel):
         self.fc_post_a = nn.Linear(2048, 1024)
         feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/w2v-bert-2.0")
         self.feature_extractor = feature_extractor
+        self.avg_pooler = nn.AvgPool1d(2, stride=2)
 
     def forward(self, input_waveform, input_features=None, sample_rate=16000):
         """
@@ -65,8 +66,6 @@ class XCodec2Model(PreTrainedModel):
                   return_tensors="pt"
               ).input_features.to(self.device)
 
-        print(input_features.shape)
-
         # 2) 语义层
         semantic_output = self.semantic_model(input_features)
         semantic_hidden_16 = semantic_output.hidden_states[16]  # 取第16层
@@ -78,14 +77,11 @@ class XCodec2Model(PreTrainedModel):
         vq_emb = self.CodecEnc(wav.unsqueeze(1))  # [batch, time//down, 1024] 只是示例
         vq_emb = vq_emb.transpose(1, 2)  # -> [batch, 1024, frames]
 
- 
-
-        # 4) 拼接
-        print(semantic_encoded.shape, vq_emb.shape)
         concat_emb = torch.cat([semantic_encoded, vq_emb], dim=1)  # [batch, 1024 + 1024, frames]
 
         # 5) fc_prior
         concat_emb = self.fc_prior(concat_emb.transpose(1, 2)).transpose(1, 2)
+        concat_emb = self.avg_pooler(concat_emb)
 
         # 6) decoder 的量化部分
         _, vq_code, _ = self.generator(concat_emb, vq=True)

@@ -4,7 +4,7 @@
 
 Paper: LLaSA: Scaling Train-time and Inference-time Compute for LLaMA-based Speech Synthesis, originally from https://huggingface.co/HKUSTAudio/xcodec2
 
-We scale up to 24k sample rate.
+We scale up to 24k sample rate, also add 25 TPS.
 
 ## Training
 
@@ -43,6 +43,6 @@ CUDA_VISIBLE_DEVICES="0,1" \
 python3 train.py log_dir=24k \
 train.trainer.devices=2 \
 dataset.train.filelist="/home/husein/ssd3/gemma3/audio-files.txt" \
-dataset.train.batch_size=16 \
+dataset.train.batch_size=18 \
 dataset.val.filelist="/home/husein/ssd3/gemma3/audio-files-test.txt"
 ```

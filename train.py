@@ -23,7 +23,7 @@ seed_everything(seed)
 def train(cfg):
     checkpoint_callback = ModelCheckpoint(dirpath=cfg.log_dir, 
                             save_top_k=-1, save_last=True,
-                            every_n_train_steps=20000, monitor='mel_loss', mode='min')
+                            every_n_train_steps=5000, monitor='mel_loss', mode='min')
 
     lr_monitor = LearningRateMonitor(logging_interval='step')
     callbacks = [checkpoint_callback, lr_monitor]
@@ -32,7 +32,7 @@ def train(cfg):
     lightning_module = CodecLightningModule(cfg)
     log_dir_name = os.path.basename(os.path.normpath(cfg.log_dir))
     wandb_logger = WandbLogger(
-        project='xcodec2',  # 替换为您的项目名称
+        project='xcodec2-24k-25tps',  # 替换为您的项目名称
         name=log_dir_name,              # 替换为您的运行名称
         config=OmegaConf.to_container(cfg, resolve=True)  # 将 Hydra 配置转换为字典并传递
     )    
