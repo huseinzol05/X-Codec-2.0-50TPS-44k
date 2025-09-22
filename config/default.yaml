@@ -12,3 +12,5 @@ hydra:
   output_subdir: hydra
   job:
     chdir: True
+  run:
+    dir: .

@@ -1,8 +1,12 @@
 *.ipynb_checkpoints
 *.ipynb
-__pycache__
+*__pycache__
 xcodec
 epoch=4-step=1400000.ckpt
 outputs
 !interpolate.ipynb
 interpolate
+24k
+wandb
+hydra
+*.log

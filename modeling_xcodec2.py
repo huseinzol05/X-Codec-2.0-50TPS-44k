@@ -138,6 +138,7 @@ class XCodec2Model(PreTrainedModel):
             concat_emb = self.fc_prior(concat_emb.transpose(1, 2)).transpose(1, 2)
 
             # 6) decoder 的量化部分，获取code
+            concat_emb = self.avg_pooler(concat_emb)
             _, vq_code, _ = self.generator(concat_emb, vq=True)
             # vq_code: [batch, frames]
             return vq_code

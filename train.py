@@ -39,6 +39,7 @@ def train(cfg):
 
     ckpt_path = None
     last_ckpt = os.path.join(cfg.log_dir, 'last.ckpt')
+    print(last_ckpt)
     if os.path.exists(last_ckpt):
         ckpt_path = last_ckpt
         print(f"Resuming from checkpoint: {ckpt_path}")
