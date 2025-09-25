@@ -85,48 +85,54 @@ class FSDataset(Dataset):
 
     def __getitem__(self, idx):
         # (  wavpath,fid) = self.filelist[idx]
-        wavpath_full  = self.filelist[idx]
- 
-        original_wav,sr = torchaudio.load(wavpath_full) 
-        min_audio_length_24k = int(self.min_audio_length / 16000 * 24000)
 
-        if sr != 16000:
-            wav = Resample(sr, 16000)(original_wav)
-        else:
-            wav = original_wav
+        try:
+            wavpath_full  = self.filelist[idx]
+    
+            original_wav,sr = torchaudio.load(wavpath_full) 
+            min_audio_length_24k = int(self.min_audio_length / 16000 * 24000)
 
-        wav = wav[0,:]
-        length = wav.shape[0]
-        # length = wav.shape[1]
-        if length < self.min_audio_length:
-            wav = F.pad(wav, (0, self.min_audio_length - length))
+            if sr != 16000:
+                wav = Resample(sr, 16000)(original_wav)
+            else:
+                wav = original_wav
+
+            wav = wav[0,:]
             length = wav.shape[0]
-        i = random.randint(0, length-self.min_audio_length)
-        wav = wav[i:i+self.min_audio_length]
-        wav_pad = F.pad(wav, (160, 160))
-        feat = self.feature_extractor(wav_pad, sampling_rate=16000, return_tensors="pt") .data['input_features']
+            # length = wav.shape[1]
+            if length < self.min_audio_length:
+                wav = F.pad(wav, (0, self.min_audio_length - length))
+                length = wav.shape[0]
+            i = random.randint(0, length-self.min_audio_length)
+            wav = wav[i:i+self.min_audio_length]
+            wav_pad = F.pad(wav, (160, 160))
+            feat = self.feature_extractor(wav_pad, sampling_rate=16000, return_tensors="pt") .data['input_features']
 
-        if sr != 24000:
-            wav_24k = Resample(sr, 24000)(original_wav)
-        else:
-            wav_24k = original_wav
-        wav_24k = wav_24k[0,:]
-        length = wav_24k.shape[0]
-        if length < min_audio_length_24k:
-            wav_24k = F.pad(wav_24k, (0, min_audio_length_24k - length))
+            if sr != 24000:
+                wav_24k = Resample(sr, 24000)(original_wav)
+            else:
+                wav_24k = original_wav
+            wav_24k = wav_24k[0,:]
             length = wav_24k.shape[0]
-        i = random.randint(0, length-min_audio_length_24k)
-        wav_24k = wav_24k[i:i+min_audio_length_24k]
+            if length < min_audio_length_24k:
+                wav_24k = F.pad(wav_24k, (0, min_audio_length_24k - length))
+                length = wav_24k.shape[0]
+            i = random.randint(0, length-min_audio_length_24k)
+            wav_24k = wav_24k[i:i+min_audio_length_24k]
 
-        out = {
-            'wav': wav,
-            'feat': feat,
-            'wav_24k': wav_24k,
-        }
-        
-        return out
+            out = {
+                'wav': wav,
+                'feat': feat,
+                'wav_24k': wav_24k,
+            }
+            
+            return out
+        except Exception as e:
+            print(e)
     
     def collate_fn(self, bs):
+
+        bs = [b for b in bs if b is not None]
  
         wavs = [b['wav'] for b in bs]
         wavs = torch.stack(wavs)
