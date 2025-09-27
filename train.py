@@ -22,8 +22,8 @@ seed_everything(seed)
 @hydra.main(config_path='config', config_name='default', version_base=None)
 def train(cfg):
     checkpoint_callback = ModelCheckpoint(dirpath=cfg.log_dir, 
-                            save_top_k=-1, save_last=True,
-                            every_n_train_steps=5000, monitor='mel_loss', mode='min')
+                            save_top_k=5, save_last=True,
+                            every_n_train_steps=2500, monitor='step', mode='max')
 
     lr_monitor = LearningRateMonitor(logging_interval='step')
     callbacks = [checkpoint_callback, lr_monitor]
@@ -38,7 +38,7 @@ def train(cfg):
     )    
 
     ckpt_path = None
-    last_ckpt = os.path.join(cfg.log_dir, 'last-v1.ckpt')
+    last_ckpt = os.path.join(cfg.log_dir, 'last-v2.ckpt')
     print(last_ckpt)
     if os.path.exists(last_ckpt):
         ckpt_path = last_ckpt
