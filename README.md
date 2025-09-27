@@ -28,6 +28,8 @@ Or you can prepare yourself the data, example, [example.txt],
 /path/audio2.wav
 ```
 
+But this is how we prepare our dataset, [prepare-audio-files.ipynb](prepare-audio-files.ipynb).
+
 3. Download checkpoint, optional,
 
 ```bash
@@ -43,6 +45,6 @@ CUDA_VISIBLE_DEVICES="0,1" \
 python3 train.py log_dir=24k \
 train.trainer.devices=2 \
 dataset.train.filelist="/home/husein/ssd3/gemma3/audio-files.txt" \
-dataset.train.batch_size=18 \
+dataset.train.batch_size=20 \
 dataset.val.filelist="/home/husein/ssd3/gemma3/audio-files-test.txt"
 ```

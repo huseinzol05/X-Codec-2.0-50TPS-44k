@@ -10,3 +10,6 @@ interpolate
 wandb
 hydra
 *.log
+!prepare-audio-files.ipynb
+*.mp3
+*.pyc
