@@ -39,7 +39,6 @@ class XCodec2Model(PreTrainedModel):
         self.fc_post_a = nn.Linear(2048, 1024)
         feature_extractor = AutoFeatureExtractor.from_pretrained("facebook/w2v-bert-2.0")
         self.feature_extractor = feature_extractor
-        self.avg_pooler = nn.AvgPool1d(2, stride=2)
 
     def forward(self, input_waveform, input_features=None, sample_rate=16000):
         """
@@ -81,7 +80,6 @@ class XCodec2Model(PreTrainedModel):
 
         # 5) fc_prior
         concat_emb = self.fc_prior(concat_emb.transpose(1, 2)).transpose(1, 2)
-        concat_emb = self.avg_pooler(concat_emb)
 
         # 6) decoder 的量化部分
         _, vq_code, _ = self.generator(concat_emb, vq=True)

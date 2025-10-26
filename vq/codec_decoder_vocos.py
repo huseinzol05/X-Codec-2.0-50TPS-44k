@@ -371,10 +371,10 @@ def init_weights(m):
 class CodecDecoderVocos(nn.Module):
     def __init__(self,
                  hidden_dim=1024,
-                 depth=12,
+                 depth=16,
                  heads=16,
                  pos_meb_dim=64,
-                 hop_length=960,
+                 hop_length=882,
                  vq_num_quantizers=1,
                  vq_dim=2048, #1024 2048
                  vq_commit_weight=0.25,
